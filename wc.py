@@ -30,13 +30,14 @@ def count_words_lines_bytes_stdin(filename,opts):
  wordcount=0
  countlines=0
  charcount=0
+ countbytes=0
 
  for line in filename:
-  charcount+=len(line) 
+  charcount+=len(line.decode('utf-8'))
+  countbytes+=len(line)
   line=line.split()
   wordcount+=len(line)
   countlines+=1  
- countbytes=charcount
  
  x=[] 
  filename=''
@@ -80,19 +81,19 @@ def count_words_lines_bytes(filename,opts):
  #to find out those values. 
  
  if len(opts) == 1 and opts[0]=='-c': return [str(countbytes),filename]
- if len(opts) == 1 and opts[0]=='-m': return [str(countbytes),filename]
- if len(opts) == 2 and opts[0]=='-m' and opts[1]=='-c':
-  return [str(countbytes),str(countbytes),filename]
+ #if len(opts) == 1 and opts[0]=='-m': return [str(countbytes),filename]
+ #if len(opts) == 2 and opts[0]=='-m' and opts[1]=='-c':
+ # return [str(countbytes),str(countbytes),filename]
 
  wordcount=0
  countlines=0
-# charcount=0
+ charcount=0
 # Counting lines and words by scanning through the file.
 # Then spliting each lines using space separator as delimiter.
 # This is the expensive part of the code. C/C++ counterpart is far more efficient.
 
  for line in myfile:
-  #charcount+=len(line) 
+  charcount+=len(line.decode('utf-8'))
   line=line.split()
   wordcount+=len(line)
   countlines+=1  
@@ -105,7 +106,7 @@ def count_words_lines_bytes(filename,opts):
  #Couting of bytes (option -c) and characters (option -m) is performed in the very same way which
  #is by applying stat system call to the filename. The C implementation in GNU core does the same.
 
- results={'-c':countbytes,'-l':countlines,'-w':wordcount,'-m':countbytes}
+ results={'-c':countbytes,'-l':countlines,'-w':wordcount,'-m':charcount}
  x = [str(results[i]) for i in opts]  
  x.append(filename) 
  return x
