@@ -1,0 +1,18 @@
+This is a small demo program I wrote to expose wc
+through a mini-web-server.
+
+(c) 2017 Hin-Tak Leung.
+
+Usage
+=====
+
+Launch the server as (any number larger than 1024):
+
+    python ./wc-mini-web-server.py 7642
+
+and point your browser at:
+
+    http://localhost:7642
+
+You would be given a form to upload a file. Once you click
+"Upload File", you would get essentially the same output.

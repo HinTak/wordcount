@@ -2,6 +2,15 @@
 import os
 import sys
 import getopt
+from cStringIO import StringIO
+
+byte_hash = {}
+
+wordcount=0
+countlines=0
+charcount=0
+countbytes=0
+stats = {}
 
 def myhelp():
  print "Usage: "
@@ -26,18 +35,26 @@ def sort_opts(opt):
  return (opt_order[opt],opt)
 
 #Do counting using standard input as a data source
-def count_words_lines_bytes_stdin(filename,opts):
- wordcount=0
- countlines=0
- charcount=0
- countbytes=0
-
+def count_words_lines_bytes_stdin(filename_in,opts):
+ global charcount, wordcount, countlines, countbytes
+ if (type(filename_in) == str):
+  filestr = StringIO(filename_in)
+  filename = filestr.readlines()
+ else:
+  filename = filename_in
  for line in filename:
   charcount+=len(line.decode('utf-8'))
   countbytes+=len(line)
+  ascii_code = map(ord, line)
+  for a in ascii_code:
+   if a in byte_hash.keys():
+    byte_hash[a] +=1
+   else:
+    byte_hash[a] = 1
   line=line.split()
   wordcount+=len(line)
   countlines+=1  
+ do_stats()
  
  x=[] 
  filename=''
@@ -53,6 +70,7 @@ def count_words_lines_bytes_stdin(filename,opts):
 
 #Doing couting using regular files as data source
 def count_words_lines_bytes(filename,opts):
+ global charcount, wordcount, countlines, countbytes
 
  if len(opts)==0:
   opts=['-l','-w','-m']
@@ -85,18 +103,23 @@ def count_words_lines_bytes(filename,opts):
  #if len(opts) == 2 and opts[0]=='-m' and opts[1]=='-c':
  # return [str(countbytes),str(countbytes),filename]
 
- wordcount=0
- countlines=0
- charcount=0
+# charcount=0
 # Counting lines and words by scanning through the file.
 # Then spliting each lines using space separator as delimiter.
 # This is the expensive part of the code. C/C++ counterpart is far more efficient.
 
  for line in myfile:
   charcount+=len(line.decode('utf-8'))
+  ascii_code = map(ord, line)
+  for a in ascii_code:
+   if a in byte_hash.keys():
+    byte_hash[a] +=1
+   else:
+    byte_hash[a] = 1
   line=line.split()
   wordcount+=len(line)
   countlines+=1  
+ do_stats()
 
  #Building return value as a list of counters plus the filename. 
  #The order of the counters returned is always as follow: line,words,characters and bytes
@@ -130,6 +153,36 @@ def report(results,n):
 
  for i in results:
   print myformat.format(*i) 
+
+#return string version of report
+def report_str(results,n):
+ output = "wordcount(tokencount) = %d, linecount = %d, charcount(as utf-8) = %d bytecount = %d\n" % (wordcount, countlines, charcount, countbytes)
+
+ all_keys = byte_hash.keys()
+ all_keys.sort()
+ for i in all_keys:
+  if ((i <= 32) or (i>=127)):
+   output +="count of %s = %d\r\n" % ("0x%04x" % i, byte_hash[i])
+  else:
+   output +="count of '%s' = %d\r\n" % (chr(i), byte_hash[i])
+ all_stats_keys = stats.keys()
+ output += "\n"
+ output += "Frequency of bytes in reverse order:\n"
+ all_stats_keys.sort(reverse=True)
+ for i in all_stats_keys:
+  output +="%d instances of %s\r\n" %(i, str(stats[i]))
+ return output
+
+def do_stats():
+ all_keys = byte_hash.keys()
+ for i in all_keys:
+  if (not (byte_hash[i] in stats.keys())):
+   stats[byte_hash[i]] = []
+  if ((i <= 32) or (i>=127)):
+   stats[byte_hash[i]].append("0x%04x" % i)
+  else:
+   stats[byte_hash[i]].append(chr(i))
+ return
 
 #Function that add the total line to the results when there is more than one filename in the arguments 
 def total(results,n):
